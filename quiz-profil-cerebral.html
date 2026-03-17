@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz — Profil Cérébral</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --ld:  #27ae60;
+      --cd:  #2980b9;
+      --lg:  #c0392b;
+      --cg:  #8e44ad;
+      --bg:  #0d0d1a;
+      --s1:  #13132b;
+      --s2:  #1a1a36;
+      --txt: #e4e4e4;
+      --acc: #00cfff;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── HEADER ── */
+    header {
+      width: 100%;
+      padding: 2rem 1rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(160deg, #13132b 0%, #1a1a36 100%);
+      border-bottom: 1px solid #2a2a4a;
+    }
+    header h1 {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      background: linear-gradient(90deg, var(--acc), #b06eff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { color: #888; font-size: .9rem; margin-top: .4rem; }
+
+    /* ── SHARED CARD ── */
+    .card {
+      background: var(--s1);
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 2rem;
+    }
+
+    /* ── INTRO ── */
+    #intro {
+      max-width: 680px;
+      width: 100%;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+    }
+    #intro h2 {
+      font-size: 1.6rem;
+      background: linear-gradient(90deg, var(--acc), #b06eff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+    #intro p { color: #aaa; line-height: 1.7; margin-bottom: 1.5rem; }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .9rem;
+      margin: 1.5rem 0 2rem;
+      text-align: left;
+    }
+    .legend-item {
+      border-radius: 10px;
+      padding: .9rem 1.1rem;
+    }
+    .legend-item h4 { font-size: .95rem; margin-bottom: .3rem; }
+    .legend-item p  { font-size: .78rem; color: #bbb; line-height: 1.4; }
+    .legend-item.LD { background: rgba(39,174, 96,.15); border: 1px solid rgba(39,174, 96,.35); }
+    .legend-item.CD { background: rgba(41,128,185,.15); border: 1px solid rgba(41,128,185,.35); }
+    .legend-item.LG { background: rgba(192, 57, 43,.15); border: 1px solid rgba(192, 57, 43,.35); }
+    .legend-item.CG { background: rgba(142, 68,173,.15); border: 1px solid rgba(142, 68,173,.35); }
+    .legend-item.LD h4 { color: var(--ld); }
+    .legend-item.CD h4 { color: var(--cd); }
+    .legend-item.LG h4 { color: var(--lg); }
+    .legend-item.CG h4 { color: var(--cg); }
+
+    /* ── QUIZ ── */
+    #quiz {
+      display: none;
+      width: 100%;
+      max-width: 760px;
+      padding: 2rem 1.5rem;
+    }
+
+    .progress-wrap {
+      width: 100%;
+      height: 6px;
+      background: #222245;
+      border-radius: 3px;
+      margin-bottom: 1.4rem;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--acc), #b06eff);
+      border-radius: 3px;
+      transition: width .4s ease;
+      width: 0%;
+    }
+
+    .q-info {
+      text-align: center;
+      color: #777;
+      font-size: .85rem;
+      margin-bottom: 1.4rem;
+      letter-spacing: .5px;
+    }
+
+    #q-card {
+      transition: opacity .2s ease;
+    }
+    .q-label {
+      text-align: center;
+      font-size: .8rem;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1.8rem;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+      align-items: center;
+    }
+    .choice-btn {
+      padding: 1.8rem 1rem;
+      background: var(--s2);
+      border: 2px solid #2a2a4a;
+      border-radius: 12px;
+      color: var(--txt);
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, transform .15s, box-shadow .2s;
+      line-height: 1.3;
+      text-align: center;
+      word-break: break-word;
+    }
+    .choice-btn:hover {
+      border-color: var(--acc);
+      background: rgba(0, 207, 255, .1);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 24px rgba(0,207,255,.2);
+    }
+    .ou-label {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #444;
+      text-align: center;
+    }
+
+    /* live score strip */
+    .score-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .8rem;
+      margin-top: 2rem;
+    }
+    .strip-item {
+      background: var(--s1);
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      padding: .65rem .5rem;
+      text-align: center;
+    }
+    .strip-item .sl  { font-size: .65rem; color: #777; text-transform: uppercase; margin-bottom: .25rem; }
+    .strip-item .sv  { font-size: 1.3rem; font-weight: 800; }
+    .strip-item.LD .sv { color: var(--ld); }
+    .strip-item.CD .sv { color: var(--cd); }
+    .strip-item.LG .sv { color: var(--lg); }
+    .strip-item.CG .sv { color: var(--cg); }
+
+    /* ── RESULTS ── */
+    #results {
+      display: none;
+      width: 100%;
+      max-width: 920px;
+      padding: 2rem 1.5rem 3rem;
+    }
+    #results h2 {
+      text-align: center;
+      font-size: 2rem;
+      background: linear-gradient(90deg, var(--acc), #b06eff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .4rem;
+    }
+    #results .sub { text-align: center; color: #777; font-size: .85rem; margin-bottom: 2rem; }
+
+    /* brain quadrant map */
+    .brain-map h3 { color: var(--acc); font-size: 1rem; margin-bottom: 1rem; letter-spacing: .5px; }
+    .brain-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .bq {
+      padding: 1.4rem 1.2rem;
+      text-align: center;
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+    .bq h4   { font-size: .75rem; opacity: .75; margin-bottom: .3rem; text-transform: uppercase; letter-spacing: .5px; }
+    .bq .bn  { font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
+    .bq .bs  { font-size: 2.2rem; font-weight: 900; }
+    .bq .bp  { font-size: .78rem; opacity: .65; }
+    .bq.LD { background: rgba(39,174, 96,.18); border: 1px solid rgba(39,174, 96,.35); }
+    .bq.CD { background: rgba(41,128,185,.18); border: 1px solid rgba(41,128,185,.35); }
+    .bq.LG { background: rgba(192, 57, 43,.18); border: 1px solid rgba(192, 57, 43,.35); }
+    .bq.CG { background: rgba(142, 68,173,.18); border: 1px solid rgba(142, 68,173,.35); }
+    .bq.LD .bs { color: var(--ld); }
+    .bq.CD .bs { color: var(--cd); }
+    .bq.LG .bs { color: var(--lg); }
+    .bq.CG .bs { color: var(--cg); }
+
+    /* charts */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: center;
+    }
+    .chart-wrap { position: relative; }
+
+    /* profile cards */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .p-card {
+      border-radius: 14px;
+      padding: 1.4rem;
+      border: 2px solid #2a2a4a;
+      background: var(--s1);
+      text-align: center;
+    }
+    .p-card .pi   { font-size: 2rem; margin-bottom: .5rem; }
+    .p-card .pt   { font-size: 1.2rem; font-weight: 700; margin-bottom: .2rem; }
+    .p-card .pn   { font-size: .75rem; color: #888; margin-bottom: .9rem; }
+    .p-card .ps   { font-size: 1.8rem; font-weight: 800; }
+    .p-card .pbar { width: 100%; height: 7px; background: #222; border-radius: 4px; margin-top: .75rem; overflow: hidden; }
+    .p-card .pbar-fill { height: 100%; border-radius: 4px; transition: width .8s ease; }
+    .p-card.dominant { border-width: 3px; }
+    .p-card.LD .ps, .p-card.LD.dominant { border-color: var(--ld); }
+    .p-card.CD .ps, .p-card.CD.dominant { border-color: var(--cd); }
+    .p-card.LG .ps, .p-card.LG.dominant { border-color: var(--lg); }
+    .p-card.CG .ps, .p-card.CG.dominant { border-color: var(--cg); }
+    .p-card.LD .ps { color: var(--ld); }
+    .p-card.CD .ps { color: var(--cd); }
+    .p-card.LG .ps { color: var(--lg); }
+    .p-card.CG .ps { color: var(--cg); }
+    .p-card.LD .pbar-fill { background: var(--ld); }
+    .p-card.CD .pbar-fill { background: var(--cd); }
+    .p-card.LG .pbar-fill { background: var(--lg); }
+    .p-card.CG .pbar-fill { background: var(--cg); }
+
+    /* description + traits */
+    .desc-box h3 { color: var(--acc); margin-bottom: .8rem; font-size: 1rem; }
+    .desc-box p  { color: #bbb; line-height: 1.7; font-size: .93rem; }
+    .badges { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+    .badge {
+      padding: .3rem .8rem;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .badge.LD { background: rgba(39,174, 96,.2); color: var(--ld); border: 1px solid rgba(39,174, 96,.4); }
+    .badge.CD { background: rgba(41,128,185,.2); color: var(--cd); border: 1px solid rgba(41,128,185,.4); }
+    .badge.LG { background: rgba(192, 57, 43,.2); color: var(--lg); border: 1px solid rgba(192, 57, 43,.4); }
+    .badge.CG { background: rgba(142, 68,173,.2); color: var(--cg); border: 1px solid rgba(142, 68,173,.4); }
+
+    /* section spacer */
+    .sec { margin-top: 1.8rem; }
+
+    /* buttons */
+    .btn-grad {
+      display: inline-block;
+      padding: 1rem 2.8rem;
+      background: linear-gradient(135deg, var(--acc), #b06eff);
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+      letter-spacing: .5px;
+    }
+    .btn-grad:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0,207,255,.35);
+    }
+    .btn-center { text-align: center; margin-top: 2rem; }
+
+    /* section titles inside results */
+    .sec-title {
+      font-size: 1rem;
+      color: var(--acc);
+      letter-spacing: .5px;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 580px) {
+      .choices       { grid-template-columns: 1fr; }
+      .ou-label      { display: none; }
+      .legend-grid   { grid-template-columns: 1fr; }
+      .charts-row    { grid-template-columns: 1fr; }
+      .profile-grid  { grid-template-columns: 1fr; }
+      .brain-grid    { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🧠 Profil Cérébral</h1>
+  <p>Découvrez votre dominance cérébrale en 24 questions</p>
+</header>
+
+<!-- ══ INTRO ══ -->
+<div id="intro">
+  <h2>Comment fonctionne ce test ?</h2>
+  <p>
+    Pour chaque question, deux mots vous sont présentés. Choisissez celui qui vous ressemble <strong>le plus</strong>.
+    Répondez spontanément — il n'y a pas de bonne ou mauvaise réponse.
+    Les paires sont générées <strong>aléatoirement</strong> à chaque session.
+  </p>
+
+  <div class="legend-grid">
+    <div class="legend-item LD">
+      <h4>🤝 Limbique Droit</h4>
+      <p>Le Communicant · Émotions, empathie, relations humaines</p>
+    </div>
+    <div class="legend-item CD">
+      <h4>💡 Cortical Droit</h4>
+      <p>Le Stratège · Créativité, intuition, vision globale</p>
+    </div>
+    <div class="legend-item LG">
+      <h4>📋 Limbique Gauche</h4>
+      <p>L'Organisateur · Méthode, fiabilité, ordre</p>
+    </div>
+    <div class="legend-item CG">
+      <h4>🔬 Cortical Gauche</h4>
+      <p>L'Expert · Logique, analyse, rigueur</p>
+    </div>
+  </div>
+
+  <button class="btn-grad" onclick="startQuiz()">Commencer le test →</button>
+</div>
+
+<!-- ══ QUIZ ══ -->
+<div id="quiz">
+  <div class="progress-wrap">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+  <div class="q-info" id="q-info">Question 1 / 24</div>
+
+  <div class="card" id="q-card">
+    <div class="q-label">Lequel de ces mots vous ressemble le plus ?</div>
+    <div class="choices" id="choices"></div>
+  </div>
+
+  <div class="score-strip">
+    <div class="strip-item LD"><div class="sl">Limbique D.</div><div class="sv" id="sv-LD">0</div></div>
+    <div class="strip-item CD"><div class="sl">Cortical D.</div><div class="sv" id="sv-CD">0</div></div>
+    <div class="strip-item LG"><div class="sl">Limbique G.</div><div class="sv" id="sv-LG">0</div></div>
+    <div class="strip-item CG"><div class="sl">Cortical G.</div><div class="sv" id="sv-CG">0</div></div>
+  </div>
+</div>
+
+<!-- ══ RESULTS ══ -->
+<div id="results">
+  <h2>Votre Profil Cérébral</h2>
+  <p class="sub">Basé sur vos 24 réponses</p>
+
+  <!-- Brain map -->
+  <div class="card brain-map">
+    <h3>🧠 Carte Mentale — Dominance Cérébrale</h3>
+    <div class="brain-grid">
+      <div class="bq LD" id="bq-LD">
+        <h4>Limbique Droit</h4>
+        <div class="bn">Le Communicant</div>
+        <div class="bs" id="bs-LD">0</div>
+        <div class="bp" id="bp-LD">0 %</div>
+      </div>
+      <div class="bq CD" id="bq-CD">
+        <h4>Cortical Droit</h4>
+        <div class="bn">Le Stratège</div>
+        <div class="bs" id="bs-CD">0</div>
+        <div class="bp" id="bp-CD">0 %</div>
+      </div>
+      <div class="bq LG" id="bq-LG">
+        <h4>Limbique Gauche</h4>
+        <div class="bn">L'Organisateur</div>
+        <div class="bs" id="bs-LG">0</div>
+        <div class="bp" id="bp-LG">0 %</div>
+      </div>
+      <div class="bq CG" id="bq-CG">
+        <h4>Cortical Gauche</h4>
+        <div class="bn">L'Expert</div>
+        <div class="bs" id="bs-CG">0</div>
+        <div class="bp" id="bp-CG">0 %</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="card sec">
+    <p class="sec-title">📊 Diagramme de profil</p>
+    <div class="charts-row">
+      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Profile cards -->
+  <div class="sec">
+    <p class="sec-title">🏆 Classement des profils</p>
+    <div class="profile-grid" id="profile-grid"></div>
+  </div>
+
+  <!-- Description dominant -->
+  <div class="card desc-box sec" id="desc-dominant"></div>
+
+  <!-- All chosen words -->
+  <div class="card desc-box sec">
+    <h3>🏷️ Tous vos mots choisis</h3>
+    <div id="all-traits"></div>
+  </div>
+
+  <div class="btn-center">
+    <button class="btn-grad" onclick="restartQuiz()">🔄 Recommencer</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const CAT = {
+  LD: {
+    name: 'Limbique Droit', title: 'Le Communicant', icon: '🤝',
+    color: '#27ae60', rgba: '39,174,96',
+    desc: 'Vous êtes orienté vers les relations humaines. Empathique et chaleureux, vous communiquez facilement et créez des liens forts autour de vous. Vos émotions jouent un rôle central dans vos décisions.',
+    words: ['PÉDAGOGIQUE','EMPATHIQUE','CHALEUREUX','ÉMOTIF','FORMATEUR','SOCIABLE','MUSICIEN','SENSIBLE','SPIRITUALISTE','ORATEUR','CONVIVIAL','EXTRAVERTI']
+  },
+  CD: {
+    name: 'Cortical Droit', title: 'Le Stratège', icon: '💡',
+    color: '#2980b9', rgba: '41,128,185',
+    desc: 'Vous êtes visionnaire et créatif. Votre pensée est intuitive et globale. Vous aimez innover, prendre des risques calculés et aborder les problèmes sous un angle original.',
+    words: ['IMAGINATIF','AUDACIEUX','CRÉATIF','VISION GLOBALE','ORIGINAL','INTUITIF','ANALOGIQUE','VISION SPATIALE','IMPULSIF','VISIONNAIRE','LIBRE','INNOVATEUR']
+  },
+  LG: {
+    name: 'Limbique Gauche', title: "L'Organisateur", icon: '📋',
+    color: '#c0392b', rgba: '192,57,43',
+    desc: "Vous êtes méthodique et fiable. Vous aimez l'ordre, la planification et la stabilité. Votre force réside dans l'organisation minutieuse et le respect des procédures établies.",
+    words: ['DISCRET','FIABLE','CONSERVATEUR','SÉQUENTIEL','RÉALISTE','ORGANISATEUR','SELF-CONTROL','CONVICTION','FERME','MÉTHODIQUE','FIDÈLE','PRUDENT']
+  },
+  CG: {
+    name: 'Cortical Gauche', title: "L'Expert", icon: '🔬',
+    color: '#8e44ad', rgba: '142,68,173',
+    desc: "Vous êtes analytique et rigoureux. Vous aimez les faits, les chiffres et la logique. Votre force réside dans l'expertise technique, la pensée critique et la recherche de précision.",
+    words: ['COHÉRENT','ANALYTIQUE','MATHEUX','LOGIQUE','EXPERT','RÉFLÉCHI','QUANTITATIF','DOGMATIQUE','EXPLICATIF','VERBAL','TECHNICIEN','DÉDUCTIF']
+  }
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let questions = [], current = 0;
+let scores = { LD:0, CD:0, LG:0, CG:0 };
+let chosen = { LD:[], CD:[], LG:[], CG:[] };
+let rChart = null, bChart = null;
+
+// ═══════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ═══════════════════════════════════════════════
+// GENERATE 24 RANDOM PAIRS
+// Each column's 12 words appear exactly once.
+// Pair distribution across quadrants (6 pairs each):
+//   LD↔CD | LD↔LG | CD↔CG | LG↔CG
+// => LD: 6+6=12 ✓  CD: 6+6=12 ✓  LG: 6+6=12 ✓  CG: 6+6=12 ✓
+// ═══════════════════════════════════════════════
+function generatePairs() {
+  const pools = {};
+  for (const k in CAT) pools[k] = shuffle([...CAT[k].words]);
+
+  const idx = { LD:0, CD:0, LG:0, CG:0 };
+
+  // 6 pairs for each of the 4 column-combos, then shuffle all 24
+  const combos = shuffle([
+    ...Array(6).fill(['LD','CD']),
+    ...Array(6).fill(['LD','LG']),
+    ...Array(6).fill(['CD','CG']),
+    ...Array(6).fill(['LG','CG'])
+  ]);
+
+  return combos.map(([a, b]) => {
+    const wA = { word: pools[a][idx[a]++], cat: a };
+    const wB = { word: pools[b][idx[b]++], cat: b };
+    return Math.random() > .5 ? [wA, wB] : [wB, wA];
+  });
+}
+
+// ═══════════════════════════════════════════════
+// QUIZ FLOW
+// ═══════════════════════════════════════════════
+function startQuiz() {
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  questions = generatePairs();
+  current = 0;
+  scores = { LD:0, CD:0, LG:0, CG:0 };
+  chosen = { LD:[], CD:[], LG:[], CG:[] };
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const pct = (current / 24) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('q-info').textContent = `Question ${current + 1} / 24`;
+
+  const [optA, optB] = questions[current];
+  const box = document.getElementById('choices');
+  box.innerHTML = '';
+
+  [optA, optB].forEach((opt, i) => {
+    if (i === 1) {
+      const or = document.createElement('div');
+      or.className = 'ou-label';
+      or.textContent = 'ou';
+      box.appendChild(or);
+    }
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = opt.word;
+    btn.onclick = () => pick(opt.cat, opt.word);
+    box.appendChild(btn);
+  });
+}
+
+function pick(cat, word) {
+  scores[cat] += 2;
+  chosen[cat].push(word);
+  document.getElementById('sv-' + cat).textContent = scores[cat];
+
+  current++;
+  if (current < 24) {
+    const card = document.getElementById('q-card');
+    card.style.opacity = '0';
+    setTimeout(() => { card.style.opacity = '1'; renderQuestion(); }, 180);
+  } else {
+    showResults();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════
+function showResults() {
+  document.getElementById('quiz').style.display = 'none';
+  const res = document.getElementById('results');
+  res.style.display = 'block';
+
+  const total = Object.values(scores).reduce((a,b) => a+b, 0);
+  const pct = {};
+  for (const k in scores) pct[k] = total ? Math.round(scores[k] / total * 100) : 25;
+
+  const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+  const dominant = sorted[0][0];
+  const maxScore = sorted[0][1];
+
+  // Brain map
+  for (const k in scores) {
+    document.getElementById('bs-' + k).textContent = scores[k];
+    document.getElementById('bp-' + k).textContent = pct[k] + ' %';
+    if (k === dominant) {
+      const el = document.getElementById('bq-' + k);
+      el.style.transform = 'scale(1.04)';
+      el.style.boxShadow = `0 0 28px rgba(${CAT[k].rgba},.5)`;
+    }
+  }
+
+  // Profile cards
+  const grid = document.getElementById('profile-grid');
+  grid.innerHTML = '';
+  sorted.forEach(([k, sc]) => {
+    const fillPct = maxScore ? (sc / maxScore * 100) : 0;
+    const dom = k === dominant ? 'dominant' : '';
+    grid.innerHTML += `
+      <div class="p-card ${k} ${dom}">
+        <div class="pi">${CAT[k].icon}</div>
+        <div class="pt">${CAT[k].title}</div>
+        <div class="pn">${CAT[k].name}</div>
+        <div class="ps">${sc} pts</div>
+        <div class="pbar"><div class="pbar-fill" style="width:${fillPct}%"></div></div>
+      </div>`;
+  });
+
+  // Dominant description
+  const dd = document.getElementById('desc-dominant');
+  dd.innerHTML = `
+    <h3>${CAT[dominant].icon} Profil dominant : ${CAT[dominant].title}</h3>
+    <p>${CAT[dominant].desc}</p>
+    <p style="margin-top:.9rem; color:#999; font-size:.82rem;">Mots choisis dans cette catégorie :</p>
+    <div class="badges">
+      ${chosen[dominant].map(w => `<span class="badge ${dominant}">${w}</span>`).join('')}
+    </div>`;
+
+  // All traits
+  const at = document.getElementById('all-traits');
+  at.innerHTML = Object.entries(chosen).map(([k, ws]) => `
+    <div style="margin-bottom:1rem">
+      <div style="color:${CAT[k].color};font-weight:700;font-size:.82rem;margin-bottom:.4rem">
+        ${CAT[k].icon} ${CAT[k].name} — ${scores[k]} pts
+      </div>
+      <div class="badges">${ws.map(w => `<span class="badge ${k}">${w}</span>`).join('') || '<span style="color:#555;font-size:.8rem">aucun mot choisi</span>'}</div>
+    </div>`).join('');
+
+  // Charts
+  setTimeout(() => buildCharts(pct, maxScore), 120);
+  res.scrollIntoView({ behavior: 'smooth' });
+}
+
+function buildCharts(pct, maxScore) {
+  if (rChart) rChart.destroy();
+  if (bChart) bChart.destroy();
+
+  const labels = ['LD\nCommunicant', 'CD\nStratège', 'LG\nOrganisateur', 'CG\nExpert'];
+  const data   = [scores.LD, scores.CD, scores.LG, scores.CG];
+  const colors = [CAT.LD.color, CAT.CD.color, CAT.LG.color, CAT.CG.color];
+  const bgColors = colors.map(c => c + 'aa');
+  const MAX = 24;
+
+  // Radar
+  const rCtx = document.getElementById('radarChart').getContext('2d');
+  rChart = new Chart(rCtx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Profil',
+        data,
+        backgroundColor: 'rgba(0,207,255,.12)',
+        borderColor: '#00cfff',
+        borderWidth: 2,
+        pointBackgroundColor: colors,
+        pointBorderColor: '#fff',
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: MAX,
+          grid:        { color: 'rgba(255,255,255,.08)' },
+          angleLines:  { color: 'rgba(255,255,255,.08)' },
+          pointLabels: { color: '#aaa', font: { size: 11 } },
+          ticks:       { color: '#555', stepSize: 6, backdropColor: 'transparent' }
+        }
+      }
+    }
+  });
+
+  // Bar
+  const bCtx = document.getElementById('barChart').getContext('2d');
+  bChart = new Chart(bCtx, {
+    type: 'bar',
+    data: {
+      labels: ['LD','CD','LG','CG'],
+      datasets: [{
+        label: 'Score',
+        data,
+        backgroundColor: bgColors,
+        borderColor: colors,
+        borderWidth: 2,
+        borderRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: ctx => CAT[['LD','CD','LG','CG'][ctx[0].dataIndex]].title,
+            label: ctx => ` ${ctx.parsed.y} pts (${Math.round(ctx.parsed.y/MAX*100)} %)`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true, max: MAX,
+          grid:  { color: 'rgba(255,255,255,.05)' },
+          ticks: { color: '#888' }
+        },
+        x: { grid: { display: false }, ticks: { color: '#888' } }
+      }
+    }
+  });
+}
+
+function restartQuiz() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('intro').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
