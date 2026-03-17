@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guide Entretien — Profil Candidat</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:   #0d0d1a;
+      --s1:   #13132b;
+      --s2:   #1a1a36;
+      --brd:  #2a2a4a;
+      --txt:  #e4e4e4;
+      --muted:#888;
+      --acc:  #00cfff;
+      --mis:  #27ae60;
+      --rem:  #e67e22;
+      --for:  #8e44ad;
+      /* category colors */
+      --c1: #2980b9;
+      --c2: #16a085;
+      --c3: #8e44ad;
+      --c4: #c0392b;
+      --c5: #d35400;
+      --c6: #f39c12;
+      --c7: #e74c3c;
+      --c8: #2c3e50;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      min-height: 100vh;
+    }
+
+    /* ── TOP NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .9rem 2rem;
+      background: var(--s1);
+      border-bottom: 1px solid var(--brd);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+    nav .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--acc), #b06eff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    nav .nav-links { display: flex; gap: .8rem; flex-wrap: wrap; }
+    nav a {
+      padding: .45rem 1rem;
+      border-radius: 20px;
+      font-size: .82rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid var(--brd);
+      color: var(--muted);
+      transition: all .2s;
+    }
+    nav a:hover, nav a.active {
+      border-color: var(--acc);
+      color: var(--acc);
+      background: rgba(0,207,255,.08);
+    }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .page-header { text-align: center; margin-bottom: 2.5rem; }
+    .page-header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      background: linear-gradient(90deg, var(--acc), #b06eff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .5rem;
+    }
+    .page-header p { color: var(--muted); font-size: .9rem; }
+
+    /* ── CANDIDATE INFO ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .info-field label {
+      display: block;
+      font-size: .72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      margin-bottom: .35rem;
+    }
+    .info-field input {
+      width: 100%;
+      background: var(--s2);
+      border: 1px solid var(--brd);
+      border-radius: 8px;
+      padding: .65rem 1rem;
+      color: var(--txt);
+      font-size: .9rem;
+      transition: border-color .2s;
+    }
+    .info-field input:focus {
+      outline: none;
+      border-color: var(--acc);
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--s1);
+      border: 1px solid var(--brd);
+      border-radius: 14px;
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--acc);
+      letter-spacing: .4px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    /* ── GAUGE: 100 POINTS ── */
+    .gauge-layout {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2rem;
+      align-items: center;
+    }
+    .gauge-sliders { flex: 1; }
+
+    .gauge-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 52px;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .gauge-label {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+    .gauge-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-mis { background: var(--mis); }
+    .dot-rem { background: var(--rem); }
+    .dot-for { background: var(--for); }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"].mis { background: linear-gradient(to right, var(--mis) var(--pct, 50%), #2a2a4a var(--pct, 50%)); }
+    input[type="range"].rem { background: linear-gradient(to right, var(--rem) var(--pct, 50%), #2a2a4a var(--pct, 50%)); }
+    input[type="range"].for { background: linear-gradient(to right, var(--for) var(--pct, 50%), #2a2a4a var(--pct, 50%)); }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #555;
+      transition: border-color .2s, transform .1s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      border-color: var(--acc);
+      transform: scale(1.15);
+    }
+
+    .gauge-val {
+      font-size: 1.2rem;
+      font-weight: 800;
+      text-align: right;
+    }
+    .val-mis { color: var(--mis); }
+    .val-rem { color: var(--rem); }
+    .val-for { color: var(--for); }
+
+    .gauge-total {
+      margin-top: .5rem;
+      font-size: .8rem;
+      color: var(--muted);
+      text-align: right;
+    }
+    .gauge-total span { color: var(--acc); font-weight: 700; }
+
+    .donut-wrap { width: 170px; position: relative; }
+    .donut-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .donut-center .dc-val { font-size: 1.6rem; font-weight: 900; color: var(--acc); }
+    .donut-center .dc-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── CATEGORIES ACCORDION ── */
+    .categories { display: flex; flex-direction: column; gap: 1rem; }
+
+    .cat-block {
+      border-radius: 12px;
+      border: 1px solid var(--brd);
+      overflow: hidden;
+    }
+    .cat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.4rem;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity .2s;
+      gap: .8rem;
+    }
+    .cat-header:hover { opacity: .9; }
+    .cat-header-left { display: flex; align-items: center; gap: .75rem; }
+    .cat-icon { font-size: 1.2rem; }
+    .cat-name { font-size: 1rem; font-weight: 700; }
+    .cat-count {
+      font-size: .72rem;
+      background: rgba(255,255,255,.12);
+      padding: .2rem .55rem;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .cat-chevron {
+      font-size: .85rem;
+      transition: transform .3s;
+      color: rgba(255,255,255,.5);
+    }
+    .cat-block.open .cat-chevron { transform: rotate(180deg); }
+
+    .cat-body {
+      display: none;
+      background: var(--s1);
+      border-top: 1px solid var(--brd);
+    }
+    .cat-block.open .cat-body { display: block; }
+
+    /* question items */
+    .q-item {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: .8rem;
+      padding: 1rem 1.4rem;
+      border-bottom: 1px solid var(--brd);
+      align-items: start;
+      transition: background .15s;
+    }
+    .q-item:last-child { border-bottom: none; }
+    .q-item:hover { background: rgba(255,255,255,.025); }
+
+    .q-check {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      border: 2px solid #444;
+      background: transparent;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: background .15s, border-color .15s;
+      position: relative;
+    }
+    .q-check:checked {
+      background: var(--acc);
+      border-color: var(--acc);
+    }
+    .q-check:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: .75rem;
+      color: #000;
+      font-weight: 900;
+    }
+
+    .q-content {}
+    .q-text {
+      font-size: .92rem;
+      line-height: 1.5;
+      color: var(--txt);
+      cursor: pointer;
+    }
+    .q-item.checked .q-text {
+      text-decoration: line-through;
+      color: #555;
+    }
+
+    /* highlighted questions */
+    .q-item.key-orange { background: rgba(230,126,34,.08); }
+    .q-item.key-orange .q-text { color: #f0a050; font-weight: 600; }
+    .q-item.key-yellow { background: rgba(241,196,15,.06); }
+    .q-item.key-yellow .q-text { color: #f1c40f; font-weight: 600; }
+    .q-item.key-tag {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .key-badge {
+      font-size: .65rem;
+      padding: .15rem .5rem;
+      border-radius: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .badge-orange { background: rgba(230,126,34,.25); color: #e67e22; }
+    .badge-yellow { background: rgba(241,196,15,.2);  color: #f1c40f; }
+    .badge-brain  { background: rgba(0,207,255,.15);  color: var(--acc); }
+
+    .q-note-toggle {
+      font-size: .72rem;
+      color: #555;
+      cursor: pointer;
+      margin-top: .3rem;
+      display: inline-block;
+      transition: color .15s;
+    }
+    .q-note-toggle:hover { color: var(--acc); }
+
+    .q-note {
+      display: none;
+      margin-top: .5rem;
+    }
+    .q-note textarea {
+      width: 100%;
+      background: var(--s2);
+      border: 1px solid var(--brd);
+      border-radius: 7px;
+      padding: .55rem .8rem;
+      color: #ccc;
+      font-size: .82rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 60px;
+      transition: border-color .2s;
+    }
+    .q-note textarea:focus { outline: none; border-color: var(--acc); }
+
+    /* progress per category */
+    .cat-progress {
+      height: 3px;
+      background: rgba(255,255,255,.06);
+      position: relative;
+    }
+    .cat-progress-fill {
+      height: 100%;
+      border-radius: 0;
+      transition: width .3s;
+    }
+
+    /* ── CATEGORY COLORS ── */
+    .cat-block:nth-child(1) .cat-header { background: rgba(41,128,185,.25); }
+    .cat-block:nth-child(1) .cat-progress-fill { background: #2980b9; }
+    .cat-block:nth-child(1) .q-check:checked { background: #2980b9; border-color: #2980b9; }
+
+    .cat-block:nth-child(2) .cat-header { background: rgba(22,160,133,.25); }
+    .cat-block:nth-child(2) .cat-progress-fill { background: #16a085; }
+    .cat-block:nth-child(2) .q-check:checked { background: #16a085; border-color: #16a085; }
+
+    .cat-block:nth-child(3) .cat-header { background: rgba(142,68,173,.25); }
+    .cat-block:nth-child(3) .cat-progress-fill { background: #8e44ad; }
+    .cat-block:nth-child(3) .q-check:checked { background: #8e44ad; border-color: #8e44ad; }
+
+    .cat-block:nth-child(4) .cat-header { background: rgba(192,57,43,.25); }
+    .cat-block:nth-child(4) .cat-progress-fill { background: #c0392b; }
+    .cat-block:nth-child(4) .q-check:checked { background: #c0392b; border-color: #c0392b; }
+
+    .cat-block:nth-child(5) .cat-header { background: rgba(211,84,0,.25); }
+    .cat-block:nth-child(5) .cat-progress-fill { background: #d35400; }
+    .cat-block:nth-child(5) .q-check:checked { background: #d35400; border-color: #d35400; }
+
+    .cat-block:nth-child(6) .cat-header { background: rgba(39,174,96,.25); }
+    .cat-block:nth-child(6) .cat-progress-fill { background: #27ae60; }
+    .cat-block:nth-child(6) .q-check:checked { background: #27ae60; border-color: #27ae60; }
+
+    .cat-block:nth-child(7) .cat-header { background: rgba(231,76,60,.25); }
+    .cat-block:nth-child(7) .cat-progress-fill { background: #e74c3c; }
+    .cat-block:nth-child(7) .q-check:checked { background: #e74c3c; border-color: #e74c3c; }
+
+    .cat-block:nth-child(8) .cat-header { background: rgba(44,62,80,.6); }
+    .cat-block:nth-child(8) .cat-progress-fill { background: #7f8c8d; }
+    .cat-block:nth-child(8) .q-check:checked { background: #7f8c8d; border-color: #7f8c8d; }
+
+    /* ── SUMMARY BAR ── */
+    .summary-bar {
+      position: sticky;
+      bottom: 1rem;
+      margin: 0 auto;
+      max-width: 500px;
+      background: var(--s1);
+      border: 1px solid var(--brd);
+      border-radius: 50px;
+      padding: .75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6);
+      backdrop-filter: blur(8px);
+    }
+    .summary-bar .sb-text { font-size: .85rem; color: var(--muted); }
+    .summary-bar .sb-count { font-size: 1.1rem; font-weight: 800; color: var(--acc); }
+    .summary-bar .sb-link {
+      padding: .45rem 1.2rem;
+      background: linear-gradient(135deg, var(--acc), #b06eff);
+      border: none;
+      border-radius: 20px;
+      color: #fff;
+      font-size: .82rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    /* ── RESET BTN ── */
+    .btn-reset {
+      background: transparent;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #666;
+      font-size: .8rem;
+      padding: .4rem .9rem;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: all .2s;
+    }
+    .btn-reset:hover { border-color: var(--acc); color: var(--acc); }
+
+    /* ── PRINT ── */
+    @media print {
+      nav, .summary-bar { display: none !important; }
+      .cat-body { display: block !important; }
+      .q-note   { display: block !important; }
+      body { background: #fff; color: #000; }
+    }
+
+    @media (max-width: 600px) {
+      .gauge-layout { grid-template-columns: 1fr; }
+      .donut-wrap { width: 140px; margin: 0 auto; }
+      .gauge-row  { grid-template-columns: 110px 1fr 44px; }
+      .info-grid  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <span class="logo">🧠 Outil RH</span>
+  <div class="nav-links">
+    <a href="entretien.html" class="active">📋 Guide Entretien</a>
+    <a href="quiz-profil-cerebral.html">🧠 Quiz Profil Cérébral</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ── HEADER ── -->
+  <div class="page-header">
+    <h1>📋 Guide d'Entretien</h1>
+    <p>Questions par catégorie · Jauge de priorités candidat · Prise de notes</p>
+  </div>
+
+  <!-- ── CANDIDATE INFO ── -->
+  <div class="card">
+    <div class="card-title">👤 Informations candidat</div>
+    <div class="info-grid">
+      <div class="info-field">
+        <label>Nom & Prénom</label>
+        <input type="text" id="cand-name" placeholder="Jean Dupont" />
+      </div>
+      <div class="info-field">
+        <label>Poste visé</label>
+        <input type="text" id="cand-poste" placeholder="Développeur Full Stack" />
+      </div>
+      <div class="info-field">
+        <label>Date d'entretien</label>
+        <input type="date" id="cand-date" />
+      </div>
+      <div class="info-field">
+        <label>Recruteur</label>
+        <input type="text" id="cand-recruteur" placeholder="Votre nom" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GAUGE 100 POINTS ── -->
+  <div class="card">
+    <div class="card-title">⚖️ Priorités du candidat — 100 points à répartir</div>
+    <p style="color:var(--muted);font-size:.82rem;margin-bottom:1.5rem;">
+      Demandez au candidat de distribuer 100 points entre ces trois dimensions selon l'importance qu'il leur accorde.
+    </p>
+
+    <div class="gauge-layout">
+      <div class="gauge-sliders">
+
+        <div class="gauge-row">
+          <div class="gauge-label">
+            <span class="gauge-dot dot-mis"></span> Mission
+          </div>
+          <input type="range" id="sl-mis" class="mis" min="0" max="100" value="40"
+                 oninput="onSlide('mis')" />
+          <div class="gauge-val val-mis" id="v-mis">40</div>
+        </div>
+
+        <div class="gauge-row">
+          <div class="gauge-label">
+            <span class="gauge-dot dot-rem"></span> Rémunération
+          </div>
+          <input type="range" id="sl-rem" class="rem" min="0" max="100" value="35"
+                 oninput="onSlide('rem')" />
+          <div class="gauge-val val-rem" id="v-rem">35</div>
+        </div>
+
+        <div class="gauge-row">
+          <div class="gauge-label">
+            <span class="gauge-dot dot-for"></span> Formation
+          </div>
+          <input type="range" id="sl-for" class="for" min="0" max="100" value="25"
+                 oninput="onSlide('for')" />
+          <div class="gauge-val val-for" id="v-for">25</div>
+        </div>
+
+        <div class="gauge-total">Total : <span id="gauge-total">100</span> / 100 pts</div>
+        <button class="btn-reset" onclick="resetGauge()">↺ Réinitialiser (33/33/34)</button>
+      </div>
+
+      <div class="donut-wrap">
+        <canvas id="donutChart"></canvas>
+        <div class="donut-center">
+          <div class="dc-val">100</div>
+          <div class="dc-lbl">points</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── QUESTIONS BY CATEGORY ── -->
+  <div class="categories" id="categories"></div>
+
+  <!-- spacer for sticky bar -->
+  <div style="height:4rem"></div>
+
+</div><!-- /page -->
+
+<!-- ── STICKY SUMMARY BAR ── -->
+<div class="summary-bar">
+  <div>
+    <div class="sb-text">Questions posées</div>
+    <div class="sb-count"><span id="asked-count">0</span> / <span id="total-count">0</span></div>
+  </div>
+  <a class="sb-link" href="quiz-profil-cerebral.html">🧠 Quiz Profil →</a>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA — QUESTIONS PAR CATÉGORIE
+// ═══════════════════════════════════════════════
+const CATEGORIES = [
+  {
+    icon: '🙋', name: 'Présentation',
+    questions: [
+      { text: 'Dites m\'en plus sur vous' },
+      { text: 'Quels sont vos points forts et vos points faibles ?' },
+      { text: 'Si je croise vos amis, que vont-ils me dire sur vous ?', type: 'key-yellow', badge: '⭐ Clé' },
+    ]
+  },
+  {
+    icon: '🏢', name: 'Connaissance de l\'entreprise & Motivation',
+    questions: [
+      { text: 'Que savez-vous de notre entreprise ?' },
+      { text: 'Qu\'est ce qui vous attire vers notre entreprise ?' },
+      { text: 'Qu\'est-ce qui vous motive le plus dans notre offre d\'emploi ?' },
+      { text: 'Comment notre entreprise peut-elle vous aider à faire progresser votre carrière ?' },
+    ]
+  },
+  {
+    icon: '💼', name: 'Expérience & Compétences',
+    questions: [
+      { text: 'Quelles étaient les responsabilités que vous avez eues à votre ancien poste ?' },
+      { text: 'Quelles ont été vos plus grandes réalisations professionnelles à ce jour ?' },
+      { text: 'Avez-vous déjà pris en charge des projets ? Comment cela s\'est-il passé ?' },
+      { text: 'Comment réussissez-vous à vous sortir d\'une situation où vous étiez bloqué ?' },
+    ]
+  },
+  {
+    icon: '🤝', name: 'Travail en équipe & Communication',
+    questions: [
+      { text: 'Préférez-vous travailler seul ou en équipe ?' },
+      { text: 'De quel niveau de feedback ou de supervision avez-vous besoin ?' },
+      { text: 'Avez-vous déjà travaillé en équipe ? Si oui, quels sont vos retours de cette expérience ?' },
+      { text: 'Comment mettez-vous en place un processus de communication efficace avec votre équipe ?' },
+      { text: 'Imaginez : un collaborateur vous fait une remarque négative sur votre rendu, comment réagissez-vous ?' },
+      { text: 'Sports collectif ?' },
+    ]
+  },
+  {
+    icon: '⏰', name: 'Organisation & Méthode',
+    questions: [
+      { text: 'Comment faites-vous pour tenir les délais et réaliser les objectifs fixés, surtout quand les conditions changent ?' },
+      { text: 'En général, arrivez-vous à tenir les deadlines imposées ? Comment arrivez-vous à les ajuster ?' },
+      { text: 'Êtes-vous déjà arrivé en retard ? Comment gérez-vous la situation ?' },
+      { text: 'Diriez-vous que vous êtes plus efficace en début ou en fin de journée ?' },
+      { text: 'C\'est votre premier jour, comment organisez-vous vos différentes tâches ?' },
+      { text: 'Pourriez-vous me décrire votre journée type ?' },
+    ]
+  },
+  {
+    icon: '🚀', name: 'Projection & Vision',
+    questions: [
+      { text: 'Où vous voyez-vous à court terme ?' },
+      { text: 'Où vous voyez-vous à moyen terme ?' },
+      { text: 'Où vous voyez-vous à long terme ?' },
+      { text: 'Qu\'est-ce qui est nécessaire à votre épanouissement professionnel ?' },
+      { text: 'Pourquoi serai-je ravi de vous avoir engagé dans 6 mois ?', type: 'key-orange', badge: '🔥 Pivot' },
+    ]
+  },
+  {
+    icon: '🎯', name: 'Questions originales',
+    questions: [
+      { text: 'Quelle était la 2ème question posée lors de cet entretien ?', badge: '🧠 Mémoire' },
+      { text: 'Combien de fois les aiguilles d\'une montre se chevauchent-elles durant une journée ?', badge: '🔢 Logique' },
+    ]
+  },
+  {
+    icon: '✅', name: 'Clôture de l\'entretien',
+    questions: [
+      { text: 'Prétention salariale' },
+      { text: 'Y a-t-il une autre question que j\'aurais dû vous poser ?' },
+      { text: 'Avez-vous des questions à me poser ?' },
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════
+// BUILD CATEGORIES
+// ═══════════════════════════════════════════════
+let totalQ = 0;
+
+function buildCategories() {
+  const container = document.getElementById('categories');
+  CATEGORIES.forEach((cat, ci) => {
+    totalQ += cat.questions.length;
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+    block.id = `cat-${ci}`;
+    if (ci < 2) block.classList.add('open'); // first 2 open by default
+
+    block.innerHTML = `
+      <div class="cat-progress"><div class="cat-progress-fill" id="prog-${ci}" style="width:0%"></div></div>
+      <div class="cat-header" onclick="toggleCat(${ci})">
+        <div class="cat-header-left">
+          <span class="cat-icon">${cat.icon}</span>
+          <span class="cat-name">${cat.name}</span>
+          <span class="cat-count">${cat.questions.length} questions</span>
+        </div>
+        <span class="cat-chevron">▼</span>
+      </div>
+      <div class="cat-body" id="body-${ci}">
+        ${cat.questions.map((q, qi) => buildQuestion(q, ci, qi)).join('')}
+      </div>`;
+    container.appendChild(block);
+  });
+
+  document.getElementById('total-count').textContent = totalQ;
+}
+
+function buildQuestion(q, ci, qi) {
+  const id = `q-${ci}-${qi}`;
+  let cls = 'q-item';
+  let extra = '';
+  if (q.type === 'key-orange') cls += ' key-orange';
+  if (q.type === 'key-yellow') cls += ' key-yellow';
+
+  let badgeHtml = '';
+  if (q.badge) badgeHtml = `<span class="key-badge ${q.type === 'key-orange' ? 'badge-orange' : q.type === 'key-yellow' ? 'badge-yellow' : 'badge-brain'}">${q.badge}</span>`;
+
+  return `
+    <div class="${cls}" id="${id}-item">
+      <input type="checkbox" class="q-check" id="${id}" onchange="onCheck('${id}', ${ci})" />
+      <div class="q-content">
+        <div class="q-text" onclick="document.getElementById('${id}').click()">
+          ${badgeHtml}${q.text}
+        </div>
+        <span class="q-note-toggle" onclick="toggleNote('${id}-note')">📝 Ajouter une note</span>
+        <div class="q-note" id="${id}-note">
+          <textarea placeholder="Réponse / observations..." rows="2"></textarea>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// INTERACTIONS
+// ═══════════════════════════════════════════════
+function toggleCat(ci) {
+  document.getElementById(`cat-${ci}`).classList.toggle('open');
+}
+
+function toggleNote(id) {
+  const note = document.getElementById(id);
+  note.style.display = note.style.display === 'block' ? 'none' : 'block';
+}
+
+function onCheck(id, ci) {
+  const checked = document.getElementById(id).checked;
+  const item = document.getElementById(id + '-item');
+  if (checked) item.classList.add('checked');
+  else         item.classList.remove('checked');
+  updateProgress(ci);
+  updateTotal();
+}
+
+function updateProgress(ci) {
+  const cat = CATEGORIES[ci];
+  const total = cat.questions.length;
+  let done = 0;
+  cat.questions.forEach((_, qi) => {
+    if (document.getElementById(`q-${ci}-${qi}`)?.checked) done++;
+  });
+  const pct = total ? (done / total * 100) : 0;
+  document.getElementById(`prog-${ci}`).style.width = pct + '%';
+}
+
+function updateTotal() {
+  let done = 0;
+  CATEGORIES.forEach((cat, ci) => {
+    cat.questions.forEach((_, qi) => {
+      if (document.getElementById(`q-${ci}-${qi}`)?.checked) done++;
+    });
+  });
+  document.getElementById('asked-count').textContent = done;
+}
+
+// ═══════════════════════════════════════════════
+// GAUGE — 100 POINTS
+// ═══════════════════════════════════════════════
+let donutChart;
+
+function initDonut() {
+  const ctx = document.getElementById('donutChart').getContext('2d');
+  donutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Mission', 'Rémunération', 'Formation'],
+      datasets: [{
+        data: [40, 35, 25],
+        backgroundColor: ['#27ae60cc', '#e67e22cc', '#8e44adcc'],
+        borderColor:     ['#27ae60',   '#e67e22',   '#8e44ad'],
+        borderWidth: 2,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.label} : ${ctx.parsed} pts` }
+        }
+      }
+    }
+  });
+}
+
+function updateSliderStyle(key) {
+  const sl = document.getElementById('sl-' + key);
+  const pct = sl.value + '%';
+  sl.style.setProperty('--pct', pct);
+}
+
+function onSlide(changed) {
+  const keys = ['mis', 'rem', 'for'];
+  const others = keys.filter(k => k !== changed);
+  const changedVal = parseInt(document.getElementById('sl-' + changed).value);
+  const remaining = 100 - changedVal;
+
+  // Current sum of others
+  const sumOthers = others.reduce((s, k) => s + parseInt(document.getElementById('sl-' + k).value), 0);
+
+  if (sumOthers === 0) {
+    // split equally
+    const half = Math.floor(remaining / 2);
+    document.getElementById('sl-' + others[0]).value = half;
+    document.getElementById('sl-' + others[1]).value = remaining - half;
+  } else {
+    // scale proportionally
+    let newVals = others.map(k => {
+      const cur = parseInt(document.getElementById('sl-' + k).value);
+      return Math.round(remaining * cur / sumOthers);
+    });
+    // fix rounding
+    const sum = changedVal + newVals[0] + newVals[1];
+    newVals[0] += (100 - sum);
+    // clamp
+    newVals = newVals.map(v => Math.max(0, Math.min(100, v)));
+    others.forEach((k, i) => document.getElementById('sl-' + k).value = newVals[i]);
+  }
+
+  refreshGauge();
+}
+
+function refreshGauge() {
+  const vals = {
+    mis: parseInt(document.getElementById('sl-mis').value),
+    rem: parseInt(document.getElementById('sl-rem').value),
+    for: parseInt(document.getElementById('sl-for').value)
+  };
+  const total = vals.mis + vals.rem + vals.for;
+
+  document.getElementById('v-mis').textContent = vals.mis;
+  document.getElementById('v-rem').textContent = vals.rem;
+  document.getElementById('v-for').textContent = vals.for;
+  document.getElementById('gauge-total').textContent = total;
+  document.querySelector('.donut-center .dc-val').textContent = total;
+
+  ['mis','rem','for'].forEach(updateSliderStyle);
+
+  if (donutChart) {
+    donutChart.data.datasets[0].data = [vals.mis, vals.rem, vals.for];
+    donutChart.update();
+  }
+}
+
+function resetGauge() {
+  document.getElementById('sl-mis').value = 33;
+  document.getElementById('sl-rem').value = 33;
+  document.getElementById('sl-for').value = 34;
+  refreshGauge();
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Set today's date
+  document.getElementById('cand-date').valueAsDate = new Date();
+
+  buildCategories();
+  initDonut();
+  refreshGauge();
+});
+</script>
+</body>
+</html>

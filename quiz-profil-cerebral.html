@@ -6,6 +6,41 @@
   <title>Quiz — Profil Cérébral</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .9rem 2rem;
+      background: #13132b;
+      border-bottom: 1px solid #2a2a4a;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+    nav .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00cfff, #b06eff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    nav .nav-links { display: flex; gap: .8rem; flex-wrap: wrap; }
+    nav a {
+      padding: .45rem 1rem;
+      border-radius: 20px;
+      font-size: .82rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid #2a2a4a;
+      color: #888;
+      transition: all .2s;
+    }
+    nav a:hover, nav a.active {
+      border-color: #00cfff;
+      color: #00cfff;
+      background: rgba(0,207,255,.08);
+    }
     :root {
       --ld:  #27ae60;
       --cd:  #2980b9;
@@ -339,6 +374,22 @@
   </style>
 </head>
 <body>
+
+<nav>
+  <span class="logo">🧠 Outil RH</span>
+  <div class="nav-links">
+    <a href="entretien.html">📋 Guide Entretien</a>
+    <a href="quiz-profil-cerebral.html" class="active">🧠 Quiz Profil Cérébral</a>
+  </div>
+</nav>
+
+<nav>
+  <span class="logo">🧠 Outil RH</span>
+  <div class="nav-links">
+    <a href="entretien.html">📋 Guide Entretien</a>
+    <a href="quiz-profil-cerebral.html" class="active">🧠 Quiz Profil Cérébral</a>
+  </div>
+</nav>
 
 <header>
   <h1>🧠 Profil Cérébral</h1>
